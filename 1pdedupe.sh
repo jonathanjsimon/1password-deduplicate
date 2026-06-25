@@ -1,4 +1,5 @@
 #!/opt/homebrew/bin/bash
+# Directly exported from https://saeedesmaili.com/delete-unwanted-and-duplicated-items-on-1password/
 declare -A itemMap
 
 for id in $(op item list --categories Login --format=json | jq -r '.[] | select(.id != null) | .id'); do
