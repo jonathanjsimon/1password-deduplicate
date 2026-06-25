@@ -1,15 +1,38 @@
 #!/usr/bin/env zsh
 typeset -A itemMap
 
-zparseopts -D -F -K -- {a,-active}=flag_active || return 1
+zparseopts -D -F -K -- {a,-active}=flag_active {A,-account}:=flag_account || return 1
 
-item_ids=($(op item list --categories Login --format=json | jq -r '.[] | select(.id != null) | .id'))
+accounts=$(op account list --format=json)
+account_count=$(echo $accounts | jq '. | length')
+selected_account=""
+
+if [ $account_count -gt 1 ]; then
+    if [ -n "$flag_account" ]; then
+        selected_account=${flag_account[-1]}
+        if ! echo $accounts | jq -e ".[] | select(.shorthand == \"$selected_account\" or .url == \"$selected_account\")" > /dev/null 2>&1; then
+            echo "Account '$selected_account' not found."
+            return 1
+        fi
+    else
+        echo "Multiple accounts found:"
+        echo $accounts | jq -r 'to_entries[] | "  \(.key + 1)) \(.value.email) (\(.value.url))"'
+        printf "Select account [1-$account_count]: "
+        read selection
+        selected_account=$(echo $accounts | jq -r ".[$((selection - 1))].user_uuid")
+    fi
+fi
+
+account_args=()
+[[ -n $selected_account ]] && account_args=(--account $selected_account)
+
+item_ids=($(op item list --categories Login $account_args --format=json | jq -r '.[] | select(.id != null) | .id'))
 total=${#item_ids}
 n=0
 
 for id in $item_ids; do
     (( n++ ))
-    item=$(op item get $id --format=json)
+    item=$(op item get $id $account_args --format=json)
 
     if [[ $item != null ]]; then
         fields=$(echo $item | jq -r '.fields')
@@ -30,7 +53,7 @@ for id in $item_ids; do
             if [[ ${itemMap[$key]} ]]; then
                 if [ -n "$flag_active" ]; then
                     printf " -> deleting "
-                    op item delete $id --archive && printf "[OK]\n" || { printf "[FAIL]\n" }
+                    op item delete $id $account_args --archive && printf "[OK]\n" || printf "[FAIL]\n"
                 else
                     printf " -> would delete [dup of ${itemMap[$key]}]\n"
                 fi
