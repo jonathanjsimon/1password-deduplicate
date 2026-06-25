@@ -3,7 +3,12 @@ typeset -A itemMap
 
 zparseopts -D -F -K -- {a,-active}=flag_active || return 1
 
-for id in $(op item list --categories Login --format=json | jq -r '.[] | select(.id != null) | .id'); do
+item_ids=($(op item list --categories Login --format=json | jq -r '.[] | select(.id != null) | .id'))
+total=${#item_ids}
+n=0
+
+for id in $item_ids; do
+    (( n++ ))
     item=$(op item get $id --format=json)
 
     if [[ $item != null ]]; then
@@ -17,22 +22,17 @@ for id in $(op item list --categories Login --format=json | jq -r '.[] | select(
 
         urls=$(echo $item | jq -r '.urls // [] | .[].href')
 
-        if [[ -n $urls && -n $username && -n $password ]]; then
-            echo "$id - $title - $username"
+        printf "\r\033[K[%d/%d] %s" $n $total "${title:-$id}"
 
+        if [[ -n $urls && -n $username && -n $password ]]; then
             key=$(echo "$urls-$username-$password" | base64 -w0 | sed 's/=/_/g')
 
             if [[ ${itemMap[$key]} ]]; then
-                echo "Duplicate found:"
-                echo "Item 1: id: ${itemMap[$key]}, username: $username, website: $urls"
-                echo "Item 2: id: $id, username: $username, website: $urls"
-
                 if [ -n "$flag_active" ]; then
-                    echo "Deleting item 2: id: $id"
-                    op item delete $id --archive
-                    echo "$id deleted"
+                    printf "  →  deleting "
+                    op item delete $id --archive && printf "[OK]\n" || { printf "[FAIL]\n" }
                 else
-                    echo "Would delete item 2: id: $id"
+                    printf "  →  would delete [dup of ${itemMap[$key]}]\n"
                 fi
             else
                 itemMap[$key]=$id
@@ -40,3 +40,5 @@ for id in $(op item list --categories Login --format=json | jq -r '.[] | select(
         fi
     fi
 done
+
+printf "\n"
