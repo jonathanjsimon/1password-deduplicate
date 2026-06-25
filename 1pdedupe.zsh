@@ -10,7 +10,7 @@ selected_account=""
 if [ $account_count -gt 1 ]; then
     if [ -n "$flag_account" ]; then
         selected_account=${flag_account[-1]}
-        if ! echo $accounts | jq -e ".[] | select(.shorthand == \"$selected_account\" or .url == \"$selected_account\")" > /dev/null 2>&1; then
+        if ! echo $accounts | jq -e ".[] | select(.user_uuid == \"$selected_account\")" > /dev/null 2>&1; then
             echo "Account '$selected_account' not found."
             return 1
         fi
@@ -25,6 +25,9 @@ fi
 
 account_args=()
 [[ -n $selected_account ]] && account_args=(--account $selected_account)
+
+[ -n "$flag_active" ] && echo "Active mode: duplicates will be deleted." || echo "Dry run mode: duplicates will not be deleted."
+[ -n "$flag_active" ] && read -q "Press Enter to continue or Ctrl+C to abort..."
 
 item_ids=($(op item list --categories Login $account_args --format=json | jq -r '.[] | select(.id != null) | .id'))
 total=${#item_ids}
