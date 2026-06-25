@@ -22,7 +22,7 @@ for id in $item_ids; do
 
         urls=$(echo $item | jq -r '.urls // [] | .[].href')
 
-        printf "\r\033[K[%d/%d] %s" $n $total "${title:-$id}"
+        printf "\r\033[K[%d/%d] %s" $n $total "${title:-$id} - $username"
 
         if [[ -n $urls && -n $username && -n $password ]]; then
             key=$(echo "$urls-$username-$password" | base64 -w0 | sed 's/=/_/g')
