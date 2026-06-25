@@ -29,10 +29,10 @@ for id in $item_ids; do
 
             if [[ ${itemMap[$key]} ]]; then
                 if [ -n "$flag_active" ]; then
-                    printf "  →  deleting "
+                    printf " -> deleting "
                     op item delete $id --archive && printf "[OK]\n" || { printf "[FAIL]\n" }
                 else
-                    printf "  →  would delete [dup of ${itemMap[$key]}]\n"
+                    printf " -> would delete [dup of ${itemMap[$key]}]\n"
                 fi
             else
                 itemMap[$key]=$id
