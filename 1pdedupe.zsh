@@ -27,7 +27,7 @@ if [ $account_count -gt 1 ]; then
 fi
 
 account_args=()
-[ -n $selected_account ] && account_args=(--account $selected_account)
+[[ -n $selected_account ]] && account_args=(--account $selected_account)
 
 [ -n "$flag_ignorepassword" ] && echo "Ignoring password in duplicate detection"
 
