@@ -55,7 +55,7 @@ for id in $item_ids; do
 
         printf "\r\033[K[%d/%d] %s" $n $total "${title:-$id} - $username"
 
-        if [ -n $urls ] && [ -n $username ] && [[ -n $password || -n $flag_ignorepassword ]]; then
+        if [[ -n $urls ]] && [[ -n $username ]] && [[ -n $password || -n $flag_ignorepassword ]]; then
             keybase="$urls-$username"
             [ -z $flag_ignorepassword ] && keybase="$keybase-$password"
 
